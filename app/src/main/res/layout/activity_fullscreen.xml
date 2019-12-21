@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    tools:context=".FullscreenActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            android:layout_margin="10dp"
+            tools:ignore="UselessParent">
+
+            <LinearLayout
+                android:id="@+id/device_search_view"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            <Button
+                android:id="@+id/search_now"
+                android:textColor="@android:color/white"
+                android:background="@android:color/black"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="Start Searching" />
+
+            <ListView
+                android:id="@+id/device_list"
+                android:layout_width="match_parent"
+                android:layout_weight="9"
+                android:layout_height="0dp"/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/device_editor"
+                android:visibility="gone"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+            <TextView
+                android:text="Device Id"
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <EditText
+                android:hint="enter the device id"
+                android:layout_width="match_parent"
+                android:layout_marginBottom="10dp"
+                android:layout_height="60dp"/>
+            <Button
+                android:id="@+id/send_now"
+                android:textColor="@android:color/white"
+                android:background="@android:color/black"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:text="Write to device" />
+
+            <Button
+                android:id="@+id/done_editing"
+                android:textColor="@android:color/white"
+                android:background="@android:color/black"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:text="Done Editing" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </FrameLayout>
+
+</FrameLayout>
