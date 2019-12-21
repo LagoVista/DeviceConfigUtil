@@ -40,16 +40,21 @@ public class BluetoothService {
         connectThread.start();
     }
 
-    public synchronized void stop() {
+    public synchronized void disconnect() {
+        setState(Constants.STATE_DISCONNECTING);
         cancelConnectThread();
         cancelConnectedThread();
-        setState(Constants.STATE_NONE);
     }
 
     private synchronized void setState(int state) {
         Log.d(FullscreenActivity.TAG, "setState() " + this.state + " -> " + state);
         switch(state){
-
+            case Constants.STATE_CONNECTING: Log.d(FullscreenActivity.TAG, "setState() STATE_CONNECTING" ); break;
+            case Constants.STATE_CONNECTED: Log.d(FullscreenActivity.TAG, "setState() Connected" ); break;
+            case Constants.STATE_DISCONNECTING: Log.d(FullscreenActivity.TAG, "setState() STATE_DISCONNECTING" ); break;
+            case Constants.STATE_DISCONNECTED: Log.d(FullscreenActivity.TAG, "setState() STATE_DISCONNECTED" ); break;
+            case Constants.STATE_ERROR: Log.d(FullscreenActivity.TAG, "setState() STATE_ERROR" ); break;
+            case Constants.STATE_NONE: Log.d(FullscreenActivity.TAG, "setState() STATE_NOTE" ); break;
         }
         this.state = state;
         // Give the new state to the Handler so the UI Activity can update
@@ -83,7 +88,12 @@ public class BluetoothService {
         bundle.putString(Constants.SNACKBAR, "Unable to connect");
         msg.setData(bundle);
         myHandler.sendMessage(msg);
-        setState(Constants.STATE_ERROR);
+        if(state != Constants.STATE_DISCONNECTING &&
+                state != Constants.STATE_DISCONNECTED &&
+                state != Constants.STATE_NONE) {
+            setState(Constants.STATE_ERROR);
+        }
+
         cancelConnectThread();
     }
 
@@ -91,14 +101,20 @@ public class BluetoothService {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
-        Log.e(FullscreenActivity.TAG, "Connection Lost");
-        // Send a failure item_message back to the Activity
-        Message msg = myHandler.obtainMessage(Constants.MESSAGE_SNACKBAR);
-        Bundle bundle = new Bundle();
-        bundle.putString(Constants.SNACKBAR, "Cconnection was lost");
-        msg.setData(bundle);
-        myHandler.sendMessage(msg);
-        setState(Constants.STATE_ERROR);
+        if(state != Constants.STATE_DISCONNECTING &&
+            state != Constants.STATE_DISCONNECTED &&
+            state != Constants.STATE_NONE) {
+            Log.e(FullscreenActivity.TAG, "Connection Lost");
+            // Send a failure item_message back to the Activity
+            Message msg = myHandler.obtainMessage(Constants.MESSAGE_SNACKBAR);
+            myHandler.sendMessage(msg);
+            Bundle bundle = new Bundle();
+            bundle.putString(Constants.SNACKBAR, "Cconnection was lost");
+            msg.setData(bundle);
+
+            setState(Constants.STATE_ERROR);
+        }
+
         cancelConnectedThread();
     }
 
@@ -186,6 +202,7 @@ public class BluetoothService {
         public void cancel() {
             try {
                 mmSocket.close();
+                setState(Constants.STATE_DISCONNECTED);
             } catch (IOException e) {
                 Log.e(FullscreenActivity.TAG, "Close() socket failed", e);
             }

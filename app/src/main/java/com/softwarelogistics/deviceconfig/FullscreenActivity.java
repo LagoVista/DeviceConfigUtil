@@ -121,6 +121,8 @@ public class FullscreenActivity extends AppCompatActivity {
             public void onClick(View v) {
                 mDeviceSearchView.setVisibility(View.VISIBLE);
                 mDeviceEditor.setVisibility(View.GONE);
+                mBluetoothService.disconnect();
+                mBluetoothService = null;
             }
         });
 
@@ -145,7 +147,6 @@ public class FullscreenActivity extends AppCompatActivity {
 
         bluetoothDevicesAdapter = new BluetoothDeviceAdapter(this);
         mDeviceList.setAdapter(bluetoothDevicesAdapter);
-
 
         mDeviceList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -286,6 +287,9 @@ public class FullscreenActivity extends AppCompatActivity {
                             Toast.makeText(FullscreenActivity.this, "Bluetooth connecting", Toast.LENGTH_SHORT).show();
                             break;
                         case Constants.STATE_NONE:
+                            break;
+                        case Constants.STATE_DISCONNECTED:
+                            Toast.makeText(FullscreenActivity.this, "Bluetooth Disconnected", Toast.LENGTH_SHORT).show();
                             break;
                         case Constants.STATE_ERROR:
                             Toast.makeText(FullscreenActivity.this, "Error Connecting", Toast.LENGTH_SHORT).show();
