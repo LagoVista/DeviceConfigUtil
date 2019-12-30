@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_open_profile"
+        android:orderInCategory="100"
+        android:title="Open Profile"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_profile_save"
+        android:orderInCategory="100"
+        android:title="Save Profile"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_write_profile_to_device"
+        android:orderInCategory="100"
+        android:title="Write Profile"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_restart"
+        android:orderInCategory="100"
+        android:title="Restart"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_commission"
+        android:orderInCategory="100"
+        android:title="Commission"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_done"
+        android:orderInCategory="100"
+        android:title="Done"
+        app:showAsAction="never" />
+</menu>

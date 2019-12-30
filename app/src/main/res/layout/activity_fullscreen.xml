@@ -19,12 +19,14 @@
             android:layout_margin="10dp"
             tools:ignore="UselessParent">
             <LinearLayout
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <TextView
-                    android:text="Configuration Utility"
+                <ImageView
+                    android:layout_marginBottom="10dp"
+                    android:src="@drawable/nuviot_blue"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="60dp"/>
             </LinearLayout>
 
             <LinearLayout
@@ -54,39 +56,245 @@
                 android:layout_width="match_parent"
                 android:layout_weight="0.9"
                 android:layout_height="0dp">
-            <TextView
-                android:text="Device Id"
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="20dp" />
+                android:orientation="vertical"
+                android:layout_height="wrap_content">
 
-            <EditText
-                android:hint="enter the device id"
-                android:layout_width="match_parent"
-                android:layout_marginBottom="10dp"
-                android:layout_height="60dp"/>
-            <Button
-                android:id="@+id/send_now"
-                android:textColor="@android:color/white"
-                android:background="@android:color/black"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:layout_weight="1"
-                android:text="Write to device" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp">
+                    <TextView
+                        android:text="Bluetooth Address"
+                        android:layout_weight="0.9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
 
-            <Button
-                android:id="@+id/done_editing"
-                android:textColor="@android:color/white"
-                android:background="@android:color/black"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:layout_weight="1"
-                android:text="Done Editing" />
+                    <TextView
+                        android:text="?"
+                        android:id="@+id/blue_tooth_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp">
+                    <TextView
+                        android:text="Device Type"
+                        android:layout_weight="0.9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="?"
+                        android:id="@+id/device_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp">
+                    <TextView
+                        android:text="Firmware SKU"
+                        android:layout_weight="0.9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="?"
+                        android:id="@+id/firmware_sku"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp">
+                    <TextView
+                        android:text="Firmware Version"
+                        android:layout_weight="0.9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:text="?"
+                        android:id="@+id/firmware_veraion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <TextView
+                    android:text="Device Id"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp" />
+                <EditText
+                    android:id="@+id/device_id"
+                    android:hint="enter the device id"
+                    android:layout_width="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:layout_height="46dp"/>
+
+                <TextView
+                    android:text="WiFi SSID"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp" />
+
+                <EditText
+                    android:id="@+id/wifi_ssid"
+                    android:hint="ssid of wifi connection"
+                    android:layout_width="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:layout_height="46dp"/>
+
+                <TextView
+                    android:text="WiFi Password"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp" />
+
+                <EditText
+                    android:id="@+id/wifi_password"
+                    android:hint="wifi password for connection"
+                    android:layout_width="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:layout_height="46dp"/>
+                <TextView
+                    android:text="Host Name"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp" />
+
+                <EditText
+                    android:id="@+id/server_host_name"
+                    android:hint="server host name"
+                    android:layout_width="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:layout_height="46dp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp">
+                    <TextView
+                        android:text="Anonymous"
+                        android:layout_weight="0.9"
+                        android:layout_width="0dp"
+                        android:layout_height="20dp" />
+                    <CheckBox
+                    android:id="@+id/is_anonymous"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                </LinearLayout>
+
+
+
+                <LinearLayout
+                    android:id="@+id/credentials_section"
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:text="Connection User Name"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp" />
+
+                    <EditText
+                        android:id="@+id/user_name"
+                        android:hint="user name to connect to server"
+                        android:layout_width="match_parent"
+                        android:layout_marginBottom="10dp"
+                        android:layout_height="46dp"/>
+                    <TextView
+                        android:text="Connection Password"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp" />
+
+                    <EditText
+                        android:id="@+id/user_password"
+                        android:hint="password to connect to server"
+                        android:layout_width="match_parent"
+                        android:layout_marginBottom="10dp"
+                        android:layout_height="60dp"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/restart_device"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Restart device" />
+
+                <Button
+                    android:id="@+id/read_now"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Read from Device" />
+
+                <Button
+                    android:id="@+id/send_now"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Write to device" />
+
+                <Button
+                    android:id="@+id/commission_device"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Commision device" />
+
+                <Button
+                    android:id="@+id/done_editing"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Done Editing" />
+                    </LinearLayout>
+                </ScrollView>
             </LinearLayout>
 
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/connecting_view"
+                android:visibility="gone"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <TextView
+                    android:text="Connecting...please wait"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+                <ProgressBar
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"/>
+                <Button
+                    android:id="@+id/cancel_connect"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="Cancel" />
+                    </LinearLayout>
+            </LinearLayout>
     </FrameLayout>
 
 </FrameLayout>

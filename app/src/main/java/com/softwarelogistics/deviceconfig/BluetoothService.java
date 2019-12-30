@@ -113,6 +113,7 @@ public class BluetoothService {
             msg.setData(bundle);
 
             setState(Constants.STATE_ERROR);
+            setState(Constants.STATE_DISCONNECTED);
         }
 
         cancelConnectedThread();
@@ -248,8 +249,21 @@ public class BluetoothService {
                     readMessage.append(read);
 
                     if (read.contains("\n")) {
-                        Log.d(FullscreenActivity.TAG, readMessage.toString());
-                        myHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, readMessage.toString()).sendToTarget();
+                        String[] parts = readMessage.toString().trim().split(";");
+
+                        for(String part: parts){
+                            String[] sectionParts = part.trim().split(",");
+                            if(sectionParts.length == 2){
+                                int index = Integer.parseInt(sectionParts[0]);
+                                String value = sectionParts[1];
+                                if(value.compareTo("?") != 0 && value.compareTo("ACK") != 0) {
+                                    RemoteParameter remoteParameter = new RemoteParameter(index, value);
+                                    myHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, remoteParameter).sendToTarget();
+                                }
+                            }
+
+                            Log.d(FullscreenActivity.TAG, part);
+                        }
                         readMessage.setLength(0);
                     }
 
