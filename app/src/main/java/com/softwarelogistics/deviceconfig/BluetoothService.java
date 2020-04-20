@@ -247,24 +247,41 @@ public class BluetoothService {
                     bytes = mmInStream.read(buffer);
                     String read = new String(buffer, 0, bytes);
                     readMessage.append(read);
+                    Log.d(FullscreenActivity.TAG, read);
 
                     if (read.contains("\n")) {
-                        String[] parts = readMessage.toString().trim().split(";");
-
-                        for(String part: parts){
-                            String[] sectionParts = part.trim().split(",");
-                            if(sectionParts.length == 2){
-                                int index = Integer.parseInt(sectionParts[0]);
-                                String value = sectionParts[1];
-                                if(value.compareTo("?") != 0 && value.compareTo("ACK") != 0) {
-                                    RemoteParameter remoteParameter = new RemoteParameter(index, value);
-                                    myHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, remoteParameter).sendToTarget();
+                        if(read.startsWith("PROPERTIES")) {
+                            String payload = read.substring(11, read.toString().length() - 3);
+                            Log.d(FullscreenActivity.TAG, "PROPS AS FOUND: ["  + payload + "]");
+                            String[] parts = payload.trim().split(",");
+                            for(String part : parts){
+                                String[] sections = part.split("=");
+                                if(sections.length == 2) {
+                                    String[] labelParts = sections[0].split("-");
+                                    RemoteParameter remoteParameter = new RemoteParameter(labelParts[1].trim(), labelParts[0].trim(), sections[1].trim());
+                                    myHandler.obtainMessage(Constants.MESSAGE_PROPERTY, bytes, -1, remoteParameter).sendToTarget();
                                 }
                             }
+                        }
+                        else {
+                            String[] parts = readMessage.toString().trim().split(";");
 
-                            Log.d(FullscreenActivity.TAG, part);
+                            for (String part : parts) {
+                                String[] sectionParts = part.trim().split(",");
+                                if (sectionParts.length == 2) {
+                                    int index = Integer.parseInt(sectionParts[0]);
+                                    String value = sectionParts[1];
+                                    if (value.compareTo("?") != 0 && value.compareTo("ACK") != 0) {
+                                        RemoteParameter remoteParameter = new RemoteParameter(index, value);
+                                        myHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, remoteParameter).sendToTarget();
+                                    }
+                                }
+
+                                Log.d(FullscreenActivity.TAG, part);
+                            }
                         }
                         readMessage.setLength(0);
+
                     }
 
                 } catch (IOException e) {

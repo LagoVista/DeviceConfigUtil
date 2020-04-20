@@ -17,6 +17,10 @@
         android:title="Write Profile"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_read_properties"
+        android:orderInCategory="100"
+        android:title="Read Properties"
+        app:showAsAction="never" />    <item
         android:id="@+id/action_restart"
         android:orderInCategory="100"
         android:title="Restart"

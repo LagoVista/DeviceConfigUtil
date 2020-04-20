@@ -218,56 +218,11 @@
                         android:layout_height="60dp"/>
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/restart_device"
-                    android:textColor="@android:color/white"
-                    android:background="@android:color/black"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
-                    android:text="Restart device" />
-
-                <Button
-                    android:id="@+id/read_now"
-                    android:textColor="@android:color/white"
-                    android:background="@android:color/black"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
-                    android:text="Read from Device" />
-
-                <Button
-                    android:id="@+id/send_now"
-                    android:textColor="@android:color/white"
-                    android:background="@android:color/black"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
-                    android:text="Write to device" />
-
-                <Button
-                    android:id="@+id/commission_device"
-                    android:textColor="@android:color/white"
-                    android:background="@android:color/black"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
-                    android:text="Commision device" />
-
-                <Button
-                    android:id="@+id/done_editing"
-                    android:textColor="@android:color/white"
-                    android:background="@android:color/black"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_weight="1"
-                    android:text="Done Editing" />
-                    </LinearLayout>
+                    <ListView
+                        android:id="@+id/remote_parameter_values"
+                        android:layout_width="match_parent"
+                        android:layout_height="1000dp"/>
+            </LinearLayout>
                 </ScrollView>
             </LinearLayout>
 

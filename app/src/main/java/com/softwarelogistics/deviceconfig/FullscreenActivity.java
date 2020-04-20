@@ -49,9 +49,13 @@ public class FullscreenActivity extends AppCompatActivity {
 
     BluetoothService mBluetoothService;
     BluetoothDeviceAdapter bluetoothDevicesAdapter;
+    RemoteParameterAdapter propertiesAdapter;
+
+    boolean mReady = false;
 
     Button mSearchNow;
     ListView mDeviceList;
+    ListView mRemoteParameterValues;
     LinearLayout mDeviceEditor;
     LinearLayout mDeviceSearchView;
     LinearLayout mConnectingView;
@@ -121,11 +125,12 @@ public class FullscreenActivity extends AppCompatActivity {
 
     @Override
     public boolean onPrepareOptionsMenu (Menu menu) {
-        menu.findItem(R.id.action_open_profile).setEnabled(true);
-        menu.findItem(R.id.action_profile_save).setEnabled(true);
-        menu.findItem(R.id.action_commission).setEnabled(true);
-        menu.findItem(R.id.action_restart).setEnabled(true);
-        menu.findItem(R.id.action_write_profile_to_device).setEnabled(true);
+        menu.findItem(R.id.action_open_profile).setEnabled(mReady);
+        menu.findItem(R.id.action_profile_save).setEnabled(mReady);
+        menu.findItem(R.id.action_commission).setEnabled(mReady);
+        menu.findItem(R.id.action_restart).setEnabled(mReady);
+        menu.findItem(R.id.action_read_properties).setEnabled(mReady);
+        menu.findItem(R.id.action_write_profile_to_device).setEnabled(mReady);
         menu.findItem(R.id.action_done).setEnabled(true);
         return true;
     }
@@ -137,6 +142,7 @@ public class FullscreenActivity extends AppCompatActivity {
         switch(id)
         {
             case R.id.action_open_profile: selectProfile(); break;
+            case R.id.action_read_properties: readProperties(); break;
             case R.id.action_profile_save: saveProfile(); break;
             case R.id.action_commission: mBluetoothService.write("COMMISSION\n".getBytes()); break;
             case R.id.action_restart: mBluetoothService.write("REBOOT\n".getBytes()); break;
@@ -170,6 +176,10 @@ public class FullscreenActivity extends AppCompatActivity {
 
             Log.d(TAG, preference);
         }
+    }
+
+    void readProperties() {
+        mBluetoothService.write("PROPERTIES\n".getBytes());
     }
 
     void selectProfile(){
@@ -244,6 +254,7 @@ public class FullscreenActivity extends AppCompatActivity {
         mDeviceEditor.setVisibility(View.GONE);
         mBluetoothService.disconnect();
         mBluetoothService = null;
+        mReady = false;
     }
 
     @Override
@@ -269,6 +280,7 @@ public class FullscreenActivity extends AppCompatActivity {
         mFirmwareVersion = findViewById(R.id.firmware_veraion);
         mDeviceType = findViewById(R.id.device_type);
         mBluetoothAddress = findViewById(R.id.blue_tooth_address);
+        mRemoteParameterValues = findViewById(R.id.remote_parameter_values);
 
         mDeviceSearchView = findViewById(R.id.device_search_view);
         mDeviceEditor = findViewById(R.id.device_editor);
@@ -294,34 +306,6 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.commission_device).setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                mBluetoothService.write("COMMISSION\n".getBytes());
-            }
-        });
-
-        findViewById(R.id.restart_device).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mBluetoothService.write("REBOOT\n".getBytes());
-            }
-        });
-
-        findViewById(R.id.done_editing).setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                showSearchView();
-            }
-        });
-
-        findViewById(R.id.send_now).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                updateDevice();
-            }
-        });
-
         bluetoothDevicesAdapter = new BluetoothDeviceAdapter(this);
         mDeviceList.setAdapter(bluetoothDevicesAdapter);
 
@@ -341,6 +325,9 @@ public class FullscreenActivity extends AppCompatActivity {
         mBluetoothMessageHandler = new BluetoothMessageHandler(FullscreenActivity.this);
         mBluetoothService = new BluetoothService(mBluetoothMessageHandler, device);
         mBluetoothService.connect();
+
+        propertiesAdapter = new RemoteParameterAdapter(this, mBluetoothService );
+        mRemoteParameterValues.setAdapter(propertiesAdapter);
 
         mWiFiSSID.setText("");
         mWiFiPassword.setText("");
@@ -473,6 +460,7 @@ public class FullscreenActivity extends AppCompatActivity {
         mBluetoothService.write("HELLO\n".getBytes());
         mBluetoothService.write("QUERY\n".getBytes());
         mDeviceEditor.setVisibility(View.VISIBLE);
+        propertiesAdapter.clear();
         mConnectingView.setVisibility(View.GONE);
     }
 
@@ -486,7 +474,6 @@ public class FullscreenActivity extends AppCompatActivity {
 
         @Override
         public void handleMessage(Message msg) {
-
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
@@ -513,6 +500,11 @@ public class FullscreenActivity extends AppCompatActivity {
                             break;
                     }
                     break;
+                case Constants.MESSAGE_PROPERTY:
+                    RemoteParameter prop = (RemoteParameter)msg.obj;
+                    Log.d(FullscreenActivity.TAG, prop.getKey() + " - " + prop.getValue());
+                    propertiesAdapter.add(prop);
+                    break;
                 case Constants.MESSAGE_WRITE:
 
                     /* Not currently sending anything to BT */
@@ -530,6 +522,8 @@ public class FullscreenActivity extends AppCompatActivity {
                         case 101: mFirmwareSKU.setText(prm.getValue());break;
                         case 102: mDeviceType.setText(prm.getValue()); break;
                     }
+
+                    mReady = true;
 
                     Log.d(FullscreenActivity.TAG, String.format("%d=%s", prm.getIndex(), prm.getValue()));
                     break;
