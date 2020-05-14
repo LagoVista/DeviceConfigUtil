@@ -12,6 +12,7 @@ public interface Constants {
     int MESSAGE_WRITE = 3;
     int MESSAGE_SNACKBAR = 4;
     int MESSAGE_PROPERTY = 5;
+    int FULL_MESSAGE_CONTENT = 6;
 
     // Constants that indicate the current connection state
     int STATE_NONE = 0;       // we're doing nothing

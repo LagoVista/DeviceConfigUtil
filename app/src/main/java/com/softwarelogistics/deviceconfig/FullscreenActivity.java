@@ -39,8 +39,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,11 +53,15 @@ public class FullscreenActivity extends AppCompatActivity {
     BluetoothDeviceAdapter bluetoothDevicesAdapter;
     RemoteParameterAdapter propertiesAdapter;
 
+    ArrayAdapter<String> mConsoleOutputAdapter;
+
     boolean mReady = false;
 
     Button mSearchNow;
     ListView mDeviceList;
     ListView mRemoteParameterValues;
+    ListView mConsoleOutputList;
+    LinearLayout mConsoleOutput;
     LinearLayout mDeviceEditor;
     LinearLayout mDeviceSearchView;
     LinearLayout mConnectingView;
@@ -126,8 +132,10 @@ public class FullscreenActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu (Menu menu) {
         menu.findItem(R.id.action_open_profile).setEnabled(mReady);
+        menu.findItem(R.id.action_show_console).setEnabled(mReady);
         menu.findItem(R.id.action_profile_save).setEnabled(mReady);
         menu.findItem(R.id.action_commission).setEnabled(mReady);
+        menu.findItem(R.id.action_write_firmware).setEnabled(mReady);
         menu.findItem(R.id.action_restart).setEnabled(mReady);
         menu.findItem(R.id.action_read_properties).setEnabled(mReady);
         menu.findItem(R.id.action_write_profile_to_device).setEnabled(mReady);
@@ -143,6 +151,8 @@ public class FullscreenActivity extends AppCompatActivity {
         {
             case R.id.action_open_profile: selectProfile(); break;
             case R.id.action_read_properties: readProperties(); break;
+            case R.id.action_write_firmware: writeFirmware(); break;
+            case R.id.action_show_console: showConsole(); break;
             case R.id.action_profile_save: saveProfile(); break;
             case R.id.action_commission: mBluetoothService.write("COMMISSION\n".getBytes()); break;
             case R.id.action_restart: mBluetoothService.write("REBOOT\n".getBytes()); break;
@@ -152,6 +162,12 @@ public class FullscreenActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    void showConsole() {
+        mBluetoothService.write("QUIT\n".getBytes());
+        mDeviceEditor.setVisibility(View.GONE);
+        mConsoleOutput.setVisibility(View.VISIBLE);
     }
 
     void openProfile(String name) {
@@ -176,6 +192,17 @@ public class FullscreenActivity extends AppCompatActivity {
 
             Log.d(TAG, preference);
         }
+    }
+
+    void writeFirmware() {
+        int len = 1024*1024 + 50 * 40 + 34;
+        byte[] buffer = new byte[len];
+        for(int idx = 0; idx < len; ++idx)
+        {
+            buffer[idx] = (byte)idx;
+        }
+
+        mBluetoothService.sendBuffer(buffer);
     }
 
     void readProperties() {
@@ -250,8 +277,10 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     void showSearchView() {
+        mBluetoothService.write("QUIT\n".getBytes());
         mDeviceSearchView.setVisibility(View.VISIBLE);
         mDeviceEditor.setVisibility(View.GONE);
+        mConsoleOutput.setVisibility(View.GONE);
         mBluetoothService.disconnect();
         mBluetoothService = null;
         mReady = false;
@@ -270,6 +299,8 @@ public class FullscreenActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_fullscreen);
 
+        mConsoleOutput = findViewById(R.id.console_output);
+        mConsoleOutputList = findViewById(R.id.console_output_list);
         mWiFiPassword = findViewById(R.id.wifi_password);
         mWiFiSSID = findViewById(R.id.wifi_ssid);
         mDeviceId = findViewById(R.id.device_id);
@@ -305,6 +336,11 @@ public class FullscreenActivity extends AppCompatActivity {
                 startSearching();
             }
         });
+
+        List<String> listValues = new ArrayList<String>();
+
+        mConsoleOutputAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, listValues);
+        mConsoleOutputList.setAdapter(mConsoleOutputAdapter);
 
         bluetoothDevicesAdapter = new BluetoothDeviceAdapter(this);
         mDeviceList.setAdapter(bluetoothDevicesAdapter);
@@ -505,6 +541,11 @@ public class FullscreenActivity extends AppCompatActivity {
                     Log.d(FullscreenActivity.TAG, prop.getKey() + " - " + prop.getValue());
                     propertiesAdapter.add(prop);
                     break;
+                    case Constants.FULL_MESSAGE_CONTENT:
+                        byte[] buffer = (byte[])msg.obj;
+                        String read = new String(buffer, 0, msg.arg1);
+                        mConsoleOutputAdapter.insert(read, 0);
+                        break;
                 case Constants.MESSAGE_WRITE:
 
                     /* Not currently sending anything to BT */

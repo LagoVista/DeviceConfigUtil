@@ -10,6 +10,8 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 /**
@@ -22,8 +24,9 @@ public class BluetoothService {
 
     BluetoothDevice myDevice;
 
-    ConnectThread connectThread;
-    ConnectedThread connectedThread;
+    SendBufferThread sendBufferThread = null;
+    ConnectThread connectThread = null;
+    ConnectedThread connectedThread = null;
 
     public BluetoothService(Handler handler, BluetoothDevice device) {
         state = Constants.STATE_NONE;
@@ -135,9 +138,15 @@ public class BluetoothService {
         }
     }
 
+    public void sendBuffer(byte[] buffer) {
+        sendBufferThread = new SendBufferThread(connectedThread, buffer);
+        sendBufferThread.start();
+    }
+
     public void write(byte[] out) {
         // Create temporary object
         ConnectedThread r;
+
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
             if (state != Constants.STATE_CONNECTED) {
@@ -151,6 +160,64 @@ public class BluetoothService {
 
         // Perform the write unsynchronized
         r.write(out);
+    }
+
+    private class SendBufferThread extends Thread {
+        private final ConnectedThread mSocket;
+        private final byte[] mBuffer;
+
+        SendBufferThread(ConnectedThread socket, byte[] buffer) {
+            mSocket = socket;
+            mBuffer = buffer;
+        }
+
+        public void run() {
+            try {
+
+                mSocket.write("FIRMWARE\n".getBytes());
+
+            int blockSize = 1 * 64;
+            short blocks = (short)((mBuffer.length / blockSize) + 1);
+
+            ByteBuffer buffer = ByteBuffer.allocate(2);
+            buffer.putShort(blocks);
+            mSocket.write(buffer.array());
+            Thread.sleep(5);
+            for(int idx = 0; idx < blocks; ++idx) {
+                int start = idx * blockSize;
+                int len = mBuffer.length - start;
+                len = Math.min(blockSize, len);
+                byte[] sendBuffer = new byte[len];
+
+                buffer = ByteBuffer.allocate(2);
+                Thread.sleep(5);
+                buffer.putShort((short)len);
+                mSocket.write(buffer.array());
+                System.arraycopy(mBuffer, start, sendBuffer, 0, len);
+
+                short checkSum = 0;
+                for(int ch = 0; ch < len; ++ch){
+                    checkSum ^= sendBuffer[ch];
+                }
+
+                buffer = ByteBuffer.allocate(2);
+                buffer.putShort((short)len);
+
+                mSocket.write(sendBuffer);
+                Thread.sleep(20);
+                mSocket.write(buffer.array());
+
+                Log.d(FullscreenActivity.TAG, String.format("Send %d %d %d %d %d %d", start, len, start + len, mBuffer.length, idx, blocks));
+            }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void cancel() {
+
+        }
     }
 
     private class ConnectThread extends Thread {
@@ -243,14 +310,18 @@ public class BluetoothService {
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
-
                     bytes = mmInStream.read(buffer);
                     String read = new String(buffer, 0, bytes);
                     readMessage.append(read);
                     Log.d(FullscreenActivity.TAG, read);
 
+                    myHandler.obtainMessage(Constants.FULL_MESSAGE_CONTENT, bytes, -1, buffer).sendToTarget();
+
                     if (read.contains("\n")) {
-                        if(read.startsWith("PROPERTIES")) {
+                        if(read.startsWith("OK")) {
+
+                        }
+                        else if(read.startsWith("PROPERTIES")) {
                             String payload = read.substring(11, read.toString().length() - 3);
                             Log.d(FullscreenActivity.TAG, "PROPS AS FOUND: ["  + payload + "]");
                             String[] parts = payload.trim().split(",");
