@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 public class FullscreenActivity extends AppCompatActivity {
@@ -195,11 +196,13 @@ public class FullscreenActivity extends AppCompatActivity {
     }
 
     void writeFirmware() {
+        Random rnd = new Random();
+
         int len = 1024*1024 + 50 * 40 + 34;
         byte[] buffer = new byte[len];
         for(int idx = 0; idx < len; ++idx)
         {
-            buffer[idx] = (byte)idx;
+            buffer[idx] = (byte)(rnd.nextInt() & 0xff);
         }
 
         mBluetoothService.sendBuffer(buffer);

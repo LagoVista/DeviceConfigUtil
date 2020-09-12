@@ -12,7 +12,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 /**
  * Created by da Ent on 1-11-2015.
@@ -20,7 +22,10 @@ import java.util.UUID;
 public class BluetoothService {
 
     private Handler myHandler;
+    private Handler dfuHandler;
     private int state;
+
+    private int mLastBlockReceived = -1;
 
     BluetoothDevice myDevice;
 
@@ -28,10 +33,13 @@ public class BluetoothService {
     ConnectThread connectThread = null;
     ConnectedThread connectedThread = null;
 
+    Semaphore pendingDFUResponse = new Semaphore(0);
+
     public BluetoothService(Handler handler, BluetoothDevice device) {
         state = Constants.STATE_NONE;
         myHandler = handler;
         myDevice = device;
+        dfuHandler = new Handler();
     }
 
     public synchronized void connect() {
@@ -46,6 +54,10 @@ public class BluetoothService {
     public synchronized void disconnect() {
         setState(Constants.STATE_DISCONNECTING);
         cancelConnectThread();
+        cancelConnectedThread();
+    }
+
+    public synchronized  void cancelReadThread() {
         cancelConnectedThread();
     }
 
@@ -172,47 +184,50 @@ public class BluetoothService {
         }
 
         public void run() {
-            try {
+            mSocket.setFirmwareUpdateMode((true));
 
+            try {
                 mSocket.write("FIRMWARE\n".getBytes());
 
-            int blockSize = 1 * 64;
-            short blocks = (short)((mBuffer.length / blockSize) + 1);
+                int blockSize = 500;
+                short blocks = (short) ((mBuffer.length / blockSize) + 1);
 
-            ByteBuffer buffer = ByteBuffer.allocate(2);
-            buffer.putShort(blocks);
-            mSocket.write(buffer.array());
-            Thread.sleep(5);
-            for(int idx = 0; idx < blocks; ++idx) {
-                int start = idx * blockSize;
-                int len = mBuffer.length - start;
-                len = Math.min(blockSize, len);
-                byte[] sendBuffer = new byte[len];
-
-                buffer = ByteBuffer.allocate(2);
-                Thread.sleep(5);
-                buffer.putShort((short)len);
+                ByteBuffer buffer = ByteBuffer.allocate(2);
+                buffer.putShort(blocks);
                 mSocket.write(buffer.array());
-                System.arraycopy(mBuffer, start, sendBuffer, 0, len);
+                pendingDFUResponse.acquire();
 
-                short checkSum = 0;
-                for(int ch = 0; ch < len; ++ch){
-                    checkSum ^= sendBuffer[ch];
+                for (int idx = 0; idx < blocks; ++idx) {
+                    int start = idx * blockSize;
+                    int len = mBuffer.length - start;
+
+                    len = Math.min(blockSize, len);
+                    byte[] sendBuffer = new byte[len + 3];
+                    sendBuffer[0] = (byte)(len >> 8);
+                    sendBuffer[1] = (byte)(len & 0xff);
+                    // Send actual buffer
+                    System.arraycopy(mBuffer, start, sendBuffer, 2, len);
+                    // Send check sum
+                    byte checkSum = 0;
+                    for (int ch = 2; ch < len; ch++) {
+                        checkSum += sendBuffer[ch];
+                    }
+
+                    sendBuffer[len + 2] = checkSum;
+
+                    mSocket.write(sendBuffer);
+                    Log.d(FullscreenActivity.TAG, String.format("Send %d %d %d %d %d %d (%d/%d) - %d [%d,%d,%d]", sendBuffer[0], sendBuffer[1], start, len, start + len, mBuffer.length, idx, blocks, checkSum, sendBuffer[2], sendBuffer[3], sendBuffer[4]));
+
+                    pendingDFUResponse.acquire();
                 }
 
-                buffer = ByteBuffer.allocate(2);
-                buffer.putShort((short)len);
-
-                mSocket.write(sendBuffer);
-                Thread.sleep(20);
-                mSocket.write(buffer.array());
-
-                Log.d(FullscreenActivity.TAG, String.format("Send %d %d %d %d %d %d", start, len, start + len, mBuffer.length, idx, blocks));
+                pendingDFUResponse.acquire();
             }
-
-            } catch (InterruptedException e) {
+            catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            mSocket.setFirmwareUpdateMode((false));
         }
 
         public void cancel() {
@@ -281,6 +296,14 @@ public class BluetoothService {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+        private boolean m_fwUpdateModeEnabled;
+
+        public void setFirmwareUpdateMode(boolean enabled) {
+            if(enabled != m_fwUpdateModeEnabled) {
+                m_fwUpdateModeEnabled = enabled;
+                Log.d(FullscreenActivity.TAG, enabled ? "Switch to DFU mode" : "Switch from DFU mode");
+            }
+        }
 
         public ConnectedThread(BluetoothSocket socket) {
             mmSocket = socket;
@@ -311,6 +334,7 @@ public class BluetoothService {
             while (true) {
                 try {
                     bytes = mmInStream.read(buffer);
+
                     String read = new String(buffer, 0, bytes);
                     readMessage.append(read);
                     Log.d(FullscreenActivity.TAG, read);
@@ -318,23 +342,24 @@ public class BluetoothService {
                     myHandler.obtainMessage(Constants.FULL_MESSAGE_CONTENT, bytes, -1, buffer).sendToTarget();
 
                     if (read.contains("\n")) {
-                        if(read.startsWith("OK")) {
-
+                        if(m_fwUpdateModeEnabled) {
+                            pendingDFUResponse.release();
                         }
-                        else if(read.startsWith("PROPERTIES")) {
+                        else if (read.startsWith("OK")) {
+
+                        } else if (read.startsWith("PROPERTIES")) {
                             String payload = read.substring(11, read.toString().length() - 3);
-                            Log.d(FullscreenActivity.TAG, "PROPS AS FOUND: ["  + payload + "]");
+                            Log.d(FullscreenActivity.TAG, "PROPS AS FOUND: [" + payload + "]");
                             String[] parts = payload.trim().split(",");
-                            for(String part : parts){
+                            for (String part : parts) {
                                 String[] sections = part.split("=");
-                                if(sections.length == 2) {
+                                if (sections.length == 2) {
                                     String[] labelParts = sections[0].split("-");
                                     RemoteParameter remoteParameter = new RemoteParameter(labelParts[1].trim(), labelParts[0].trim(), sections[1].trim());
                                     myHandler.obtainMessage(Constants.MESSAGE_PROPERTY, bytes, -1, remoteParameter).sendToTarget();
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             String[] parts = readMessage.toString().trim().split(";");
 
                             for (String part : parts) {
@@ -352,9 +377,7 @@ public class BluetoothService {
                             }
                         }
                         readMessage.setLength(0);
-
                     }
-
                 } catch (IOException e) {
 
                     Log.e(FullscreenActivity.TAG, "Connection Lost", e);
